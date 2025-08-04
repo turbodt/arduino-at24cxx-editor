@@ -1,0 +1,15 @@
+{
+  "name": "AT24CXX",
+  "author": "HOSO",
+  "pins": [
+    "A0",
+    "A1",
+    "A2",
+    "GND",
+    "VCC",
+    "SCL",
+    "SDA",
+    "WP"
+  ],
+  "controls": []
+}
