@@ -16,7 +16,12 @@
       "id": "logic1",
       "top": -86.05,
       "left": 441.6,
-      "attrs": { "triggerMode": "level", "triggerPin": "D7", "triggerLevel": "high", "channelNames": "SDA,SCL" }
+      "attrs": {
+        "triggerMode": "level",
+        "triggerPin": "D7",
+        "triggerLevel": "high",
+        "channelNames": "SDA,SCL"
+      }
     },
     { "type": "wokwi-junction", "id": "j1", "top": 216, "left": 139.2, "attrs": {} },
     { "type": "wokwi-junction", "id": "j2", "top": -81.6, "left": 120, "attrs": {} },
@@ -69,10 +74,9 @@
     [ "logic1:D1", "chip1:SCL", "green", [ "h0" ] ],
     [ "uno:3.3V", "j1:J", "red", [ "v0" ] ],
     [ "j1:J", "chip1:VCC", "red", [ "v0", "h134.4", "v-278.4" ] ],
-    [ "chip1:A0", "j2:J", "red", [ "h0" ] ],
-    [ "j2:J", "chip1:A2", "red", [ "v0" ] ],
-    [ "j2:J", "j1:J", "red", [ "h-144", "v297.6" ] ],
-    [ "chip1:A1", "j2:J", "red", [ "h0" ] ],
+    [ "chip1:A0", "j2:J", "black", [ "h0" ] ],
+    [ "j2:J", "chip1:A2", "black", [ "v0" ] ],
+    [ "chip1:A1", "j2:J", "black", [ "h0" ] ],
     [ "oled1:GND", "uno:GND.1", "black", [ "v-124.8", "h-269.1" ] ],
     [ "oled1:SCL", "uno:A5.2", "green", [ "v-163.2", "h-316.5" ] ],
     [ "oled1:SDA", "uno:A4.2", "yellow", [ "v-153.6", "h-316.33" ] ],
@@ -86,7 +90,8 @@
     [ "r1:2", "uno:5", "green", [ "h0" ] ],
     [ "r2:2", "uno:4", "blue", [ "v-10.8", "h-349.5" ] ],
     [ "logic1:D7", "uno:12", "green", [ "h0" ] ],
-    [ "logic1:GND", "uno:GND.1", "black", [ "h0" ] ]
+    [ "logic1:GND", "uno:GND.1", "black", [ "h0" ] ],
+    [ "j2:J", "uno:GND.1", "black", [ "h-19.2", "v86.4" ] ]
   ],
   "dependencies": { "chip-at24cxx": "github:venusz/at24cxx-chip@0.0.1" }
 }

@@ -17,7 +17,7 @@
 #define DEBOUNCE_TIME_MS 20
 #endif
 #ifndef EEPROM_ADDR
-#define EEPROM_ADDR 0x57
+#define EEPROM_ADDR 0x50
 #endif
 #ifndef PUSH_BTN_A_PIN
 #define PUSH_BTN_A_PIN 5
