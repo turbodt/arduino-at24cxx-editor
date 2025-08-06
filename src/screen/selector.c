@@ -14,6 +14,7 @@ typedef struct {
         unsigned long int value;
         unsigned long int started_at;
     } animation;
+    uint8_t const *prev_font;
     uint8_t _bools[0];
 } ScreenState;
 #define SCREEN_SHOULD_EXIT(state) ((state)._bools[0] & 0x01)
@@ -25,21 +26,26 @@ typedef struct {
 #define SCREEN_ANIMATION_DURATION_MS 300
 
 
+static u8g2_t *u8g2;
 static void app_draw(AppState *app_state, ScreenState *screen_state);
 
 
 uint8_t screen_selector(AppState *app_state, char const * const * options) {
+    u8g2 = (u8g2_t *)app_state->display;
     ScreenState screen_state = {
         .options = options,
         .option_count = 0,
         .option_index = 0,
-        .animation = {0}
+        .animation = {0},
+        .prev_font = u8g2->font,
     };
     while (screen_state.options[screen_state.option_count] != NULL) {
         screen_state.option_count++;
     }
     SCREEN_CLEAR_SHOULD_EXIT(screen_state);
     SCREEN_SET_NEEDS_REFRESH(screen_state);
+
+    u8g2_SetFont(u8g2, u8g2_font_helvB12_tr);
 
     if (screen_state.option_count == 0) {
         return 0;
@@ -78,6 +84,7 @@ uint8_t screen_selector(AppState *app_state, char const * const * options) {
     }
 
     app_input_wait_for_total_release(&app_state->input, NULL, NULL);
+    u8g2_SetFont(u8g2, screen_state.prev_font);
     return screen_state.option_index;
 };
 
@@ -87,7 +94,6 @@ void app_draw(AppState *app_state, ScreenState *screen_state) {
     static uint8_t const font_height = 12;
     static uint8_t const font_width = 12;
     static uint8_t const col = 2*font_width;
-    u8g2_t *const u8g2 = (u8g2_t *)app_state->display;
     long int animation_pc = 0;
     if (screen_state->animation.value > 0) {
         animation_pc = (

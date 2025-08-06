@@ -54,14 +54,14 @@ void app_input_wait_for_total_release(
     bool should_exit = 0;
     while (!should_exit) {
         app_input_read(input);
+
+        should_exit = !smart_button_is_pressed(input->push_btns[BTN_A])
+            && !smart_button_is_pressed(input->push_btns[BTN_B]);
+
         smart_button_has_raised(input->push_btns[BTN_A]);
         smart_button_has_raised(input->push_btns[BTN_B]);
         smart_button_has_falled(input->push_btns[BTN_A]);
         smart_button_has_falled(input->push_btns[BTN_B]);
-
-        should_exit =
-            !smart_button_is_pressed(input->push_btns[BTN_A])
-            && !smart_button_is_pressed(input->push_btns[BTN_B]);
 
         if (!should_exit && fn != NULL) {
             fn(user_data);

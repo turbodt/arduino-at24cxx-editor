@@ -15,6 +15,7 @@ typedef struct AppState {
     struct {
         unsigned int page_size;
         unsigned int page_count;
+        unsigned int address_count;
     } eeprom_device;
 } AppState;
 

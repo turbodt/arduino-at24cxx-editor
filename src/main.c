@@ -36,6 +36,8 @@ int main(void) {
         uint8_t device_index = screen_selector(&state, available_chips);
         state.eeprom_device.page_size = page_sizes[device_index];
         state.eeprom_device.page_count = page_counts[device_index];
+        state.eeprom_device.address_count = state.eeprom_device.page_count
+            * state.eeprom_device.page_size,
         screen_editor(&state);
     }
 

@@ -54,6 +54,7 @@ inline uint8_t smart_button_has_raised(SmartButton *impl) {
     return 1;
 };
 
+
 inline uint8_t smart_button_has_falled(SmartButton *impl) {
     update_state_if_needed(impl);
     if (impl->last_state) {
@@ -65,6 +66,7 @@ inline uint8_t smart_button_has_falled(SmartButton *impl) {
     impl->has_been_checked = 1;
     return 1;
 };
+
 
 unsigned long int smart_button_pressed_during_ms(SmartButton *impl) {
     update_state_if_needed(impl);
