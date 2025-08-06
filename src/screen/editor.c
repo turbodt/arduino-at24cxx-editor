@@ -25,6 +25,7 @@ typedef struct {
     unsigned int focus_address;
     unsigned int readed_count;
     uint8_t data[CHUNK_COUNT];
+    unsigned long int btn_b_last_hold_action_at;
     uint8_t const *prev_font;
     uint8_t _bools[0];
 } ScreenState;
@@ -46,12 +47,15 @@ static void app_draw_values(AppState *app_state, ScreenState *screen_state);
 
 void screen_editor(AppState *app_state) {
     u8g2 = (u8g2_t *)app_state->display;
+    unsigned int device_size = app_state->eeprom_device.page_count
+        * app_state->eeprom_device.page_size;
 
     ScreenState screen_state = {
         .at24cxx = NULL,
         .address = 0,
         .focus_address = 0,
         .prev_font = u8g2->font,
+        .btn_b_last_hold_action_at = 0,
     };
     SCREEN_CLEAR_SHOULD_EXIT(screen_state);
     SCREEN_SET_NEEDS_REFRESH(screen_state);
@@ -78,7 +82,10 @@ void screen_editor(AppState *app_state) {
     while (!SCREEN_SHOULD_EXIT(screen_state)) {
         app_input_read(&app_state->input);
 
-        if (smart_button_has_falled(app_state->input.push_btns[BTN_B])) {
+        if (
+            smart_button_has_falled(app_state->input.push_btns[BTN_B])
+            && screen_state.btn_b_last_hold_action_at == 0
+        ) {
             screen_state.focus_address++;
             if (
                 screen_state.focus_address
@@ -86,6 +93,9 @@ void screen_editor(AppState *app_state) {
             ) {
                 screen_state.focus_address = screen_state.address;
             }
+            SCREEN_SET_NEEDS_REFRESH(screen_state);
+        } else if (smart_button_has_falled(app_state->input.push_btns[BTN_B])) {
+            screen_state.btn_b_last_hold_action_at = 0;
             SCREEN_SET_NEEDS_REFRESH(screen_state);
         } else if (smart_button_has_falled(app_state->input.push_btns[BTN_A])) {
             modify_value(app_state, &screen_state);
@@ -95,10 +105,37 @@ void screen_editor(AppState *app_state) {
         ) {
             SCREEN_SET_NEEDS_REFRESH(screen_state);
             SCREEN_SET_SHOULD_EXIT(screen_state);
+        } else if (
+            app_state->input.pressed_during_ms[BTN_B] > PUSH_BTN_LONG_PRESS_MS
+            && screen_state.btn_b_last_hold_action_at == 0
+        ) {
+            screen_state.focus_address = screen_state.address;
+            screen_state.btn_b_last_hold_action_at = millis();
+            SCREEN_SET_NEEDS_REFRESH(screen_state);
+        } else if (
+            app_state->input.pressed_during_ms[BTN_B] > PUSH_BTN_LONG_PRESS_MS
+        ) {
+            if (
+                millis() - screen_state.btn_b_last_hold_action_at
+                > PUSH_BTN_LONG_PRESS_MS
+            ) {
+                screen_state.address += CHUNK_COUNT;
+                screen_state.address = screen_state.address % device_size;
+                screen_state.focus_address = screen_state.address;
+                screen_state.readed_count = at24cxx_read_at(
+                    screen_state.at24cxx,
+                    screen_state.address,
+                    screen_state.data,
+                    CHUNK_COUNT
+                );
+                screen_state.btn_b_last_hold_action_at = millis();
+                SCREEN_SET_NEEDS_REFRESH(screen_state);
+            };
         } else if (app_state->input.pressed_during_ms[BTN_A] > 0) {
             SCREEN_SET_NEEDS_REFRESH(screen_state);
         } else if (app_state->input.pressed_during_ms[BTN_B] > 0) {
             SCREEN_SET_NEEDS_REFRESH(screen_state);
+            screen_state.btn_b_last_hold_action_at = 0;
         }
 
         if (SCREEN_NEEDS_REFRESH(screen_state)) {

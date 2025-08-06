@@ -12,7 +12,10 @@ typedef struct AppState {
     ErrorType err;
     AppInput input;
     Display *display;
-    uint8_t data_chunk[16];
+    struct {
+        unsigned int page_size;
+        unsigned int page_count;
+    } eeprom_device;
 } AppState;
 
 

@@ -21,7 +21,7 @@ ErrorType app_state_init(AppState *state) {
     }
 
     // others
-    memset(state->data_chunk, 0, sizeof(state->data_chunk));
+    memset(&state->eeprom_device, 0, sizeof(state->eeprom_device));
 
     // return
     state->err = ERR_TYPE__OK;
