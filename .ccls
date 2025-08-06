@@ -1,0 +1,6 @@
+gcc
+%c -I/home/daniel/.platformio/packages/framework-arduino-avr/cores/arduino
+%c -I./external/at24cxx
+%c -I./external/u8g2/include
+%c -I./external/two_wires
+-std=c99

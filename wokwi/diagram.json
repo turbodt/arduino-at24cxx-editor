@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "author": "Anonymous maker",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 0.6, "left": -10.2, "attrs": {} },
+    {
+      "type": "chip-at24cxx",
+      "id": "chip1",
+      "top": -94.98,
+      "left": 139.2,
+      "attrs": { "eepromSizeKb": "64" }
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic1",
+      "top": -86.05,
+      "left": 441.6,
+      "attrs": {
+        "triggerMode": "level",
+        "triggerPin": "D7",
+        "triggerLevel": "high",
+        "channelNames": "SDA,SCL"
+      }
+    },
+    { "type": "wokwi-junction", "id": "j1", "top": 216, "left": 139.2, "attrs": {} },
+    { "type": "wokwi-junction", "id": "j2", "top": -81.6, "left": 120, "attrs": {} },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": 118.34,
+      "left": 336.23,
+      "attrs": { "i2cAddress": "0x3c" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 133.8,
+      "left": 473.4,
+      "rotate": 90,
+      "attrs": { "color": "green", "xray": "1", "bounce": "0" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 133.8,
+      "left": 531,
+      "rotate": 90,
+      "attrs": { "color": "blue", "xray": "1", "bounce": "0" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 62.4,
+      "left": 469.85,
+      "rotate": 90,
+      "attrs": { "value": "10000" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 62.4,
+      "left": 527.45,
+      "rotate": 90,
+      "attrs": { "value": "10000" }
+    }
+  ],
+  "connections": [
+    [ "uno:GND.1", "chip1:GND", "black", [ "v0" ] ],
+    [ "uno:A4.2", "chip1:SDA", "yellow", [ "v-37.8", "h181.4", "v-48" ] ],
+    [ "uno:A5.2", "chip1:SCL", "green", [ "v-47.4", "h181.8", "v-28.8", "h-19.2" ] ],
+    [ "uno:8", "chip1:WP", "cyan", [ "v-28.8", "h125.2", "v-67.2" ] ],
+    [ "logic1:D0", "chip1:SDA", "yellow", [ "h0" ] ],
+    [ "logic1:D1", "chip1:SCL", "green", [ "h0" ] ],
+    [ "uno:3.3V", "j1:J", "red", [ "v0" ] ],
+    [ "j1:J", "chip1:VCC", "red", [ "v0", "h134.4", "v-278.4" ] ],
+    [ "chip1:A0", "j2:J", "black", [ "h0" ] ],
+    [ "j2:J", "chip1:A2", "black", [ "v0" ] ],
+    [ "chip1:A1", "j2:J", "black", [ "h0" ] ],
+    [ "oled1:GND", "uno:GND.1", "black", [ "v-124.8", "h-269.1" ] ],
+    [ "oled1:SCL", "uno:A5.2", "green", [ "v-163.2", "h-316.5" ] ],
+    [ "oled1:SDA", "uno:A4.2", "yellow", [ "v-153.6", "h-316.33" ] ],
+    [ "oled1:VCC", "uno:3.3V", "red", [ "v-19.2", "h-105.45", "v115.2", "h-138.6" ] ],
+    [ "r1:1", "r2:1", "black", [ "h0" ] ],
+    [ "r1:1", "uno:GND.1", "black", [ "h-124.8", "v-38.4", "h-269.1" ] ],
+    [ "r1:2", "btn1:2.l", "black", [ "h0" ] ],
+    [ "r2:2", "btn2:2.l", "black", [ "h0" ] ],
+    [ "btn1:1.r", "uno:3.3V", "red", [ "v29", "h-378.6" ] ],
+    [ "btn2:1.r", "uno:3.3V", "red", [ "v29", "h-436.2" ] ],
+    [ "r1:2", "uno:5", "green", [ "h0" ] ],
+    [ "r2:2", "uno:4", "blue", [ "v-10.8", "h-349.5" ] ],
+    [ "logic1:D7", "uno:12", "green", [ "h0" ] ],
+    [ "logic1:GND", "uno:GND.1", "black", [ "h0" ] ],
+    [ "j2:J", "uno:GND.1", "black", [ "h-19.2", "v86.4" ] ]
+  ],
+  "dependencies": { "chip-at24cxx": "github:venusz/at24cxx-chip@0.0.1" }
+}
