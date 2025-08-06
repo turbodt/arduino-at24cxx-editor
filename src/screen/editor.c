@@ -8,6 +8,17 @@
 
 
 #define CHUNK_COUNT 32
+#define COL_COUNT 8
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define FONT_HEIGHT 8
+#define FONT_WIDTH 5
+#define LINE_HEIGHT 12
+#define Y_BODY 10
+#define X_ADDR 0
+#define Y_ADDR Y_BODY + 2
+#define X_VALUES 34
+#define Y_VALUES Y_BODY + 2
 typedef struct {
     AT24CXX *at24cxx;
     unsigned int address;
@@ -25,12 +36,16 @@ typedef struct {
 #define SCREEN_CLEAR_NEEDS_REFRESH(state) (state)._bools[0] &= ~(0x02)
 
 
+static u8g2_t * u8g2;
+static char buff_byte[8];
 static void modify_value(AppState *app_state, ScreenState *screen_state);
 static void app_draw(AppState *app_state, ScreenState *screen_state);
+static void app_draw_addresses(AppState *app_state, ScreenState *screen_state);
+static void app_draw_values(AppState *app_state, ScreenState *screen_state);
 
 
 void screen_editor(AppState *app_state) {
-    u8g2_t *const u8g2 = (u8g2_t *)app_state->display;
+    u8g2 = (u8g2_t *)app_state->display;
 
     ScreenState screen_state = {
         .at24cxx = NULL,
@@ -82,6 +97,8 @@ void screen_editor(AppState *app_state) {
             SCREEN_SET_SHOULD_EXIT(screen_state);
         } else if (app_state->input.pressed_during_ms[BTN_A] > 0) {
             SCREEN_SET_NEEDS_REFRESH(screen_state);
+        } else if (app_state->input.pressed_during_ms[BTN_B] > 0) {
+            SCREEN_SET_NEEDS_REFRESH(screen_state);
         }
 
         if (SCREEN_NEEDS_REFRESH(screen_state)) {
@@ -122,53 +139,72 @@ inline void modify_value(AppState *app_state, ScreenState *screen_state) {
 
 
 void app_draw(AppState *app_state, ScreenState *screen_state) {
-    static uint8_t const col_count = 8;
-    static uint8_t const font_height = 8;
     static char buff_byte[8];
-    u8g2_t *const u8g2 = (u8g2_t *)app_state->display;
+    sprintf(buff_byte, "0x%04X", screen_state->focus_address);
 
     u8g2_FirstPage(u8g2);
     do {
         u8g2_ClearBuffer(u8g2);
 
-        uint8_t offset = 0;
-        for (uint8_t i = 0; i*col_count < CHUNK_COUNT; i++) {
-            offset = i*col_count;
-            sprintf(buff_byte, "0x%04X", screen_state->address + offset);
-            u8g2_DrawStr(u8g2, 0, 4 + i*12 + font_height, buff_byte);
-            for (
-                uint8_t j = 0;
-                j < col_count && j +i*col_count < CHUNK_COUNT;
-                j++
-            ) {
-                offset = i*col_count + j;
-                sprintf(buff_byte, "%02X", screen_state->data[offset]);
-                u8g2_DrawStr(
-                    u8g2,
-                    34 + j*2*5 + 2*j,
-                    4 + i*12 + font_height,
-                    buff_byte
-                );
-                if (
-                    screen_state->focus_address - screen_state->address
-                    == offset
-                ) {
-                    u8g2_DrawFrame(
-                        u8g2,
-                        32 + j*2*5 + 2*j,
-                        2 + i*12,
-                        2*5 + 2,
-                        font_height+4
-                    );
-                }
-            }
-        }
-
-        u8g2_DrawVLine(u8g2, 31, 0, 48 + 2);
-        u8g2_DrawHLine(u8g2, 0, 48 + 2, 128);
+        app_draw_addresses(app_state, screen_state);
+        app_draw_values(app_state, screen_state);
+        u8g2_DrawStr(
+            u8g2,
+            SCREEN_WIDTH - 6*FONT_WIDTH,
+            FONT_HEIGHT,
+            buff_byte
+        );
+        u8g2_DrawVLine(u8g2, SCREEN_WIDTH -6*FONT_WIDTH - 2, 0, Y_BODY);
+        u8g2_DrawVLine(u8g2, 6*FONT_WIDTH + 1, Y_ADDR -2 , 3*LINE_HEIGHT + FONT_HEIGHT + 4);
+        u8g2_DrawHLine(u8g2, 0, Y_BODY, SCREEN_WIDTH);
+        u8g2_DrawHLine(u8g2, 0, Y_BODY + 3*LINE_HEIGHT + FONT_HEIGHT + 4, SCREEN_WIDTH);
 
         helper_draw_long_press(u8g2, &app_state->input);
 
         u8g2_SendBuffer(u8g2);
     } while (u8g2_NextPage(u8g2));
+}
+
+inline void app_draw_addresses(AppState *app_state, ScreenState *screen_state) {
+    for (uint8_t i = 0; i*COL_COUNT < CHUNK_COUNT; i++) {
+        sprintf(buff_byte, "0x%04X", screen_state->address + i*COL_COUNT);
+        u8g2_DrawStr(
+            u8g2,
+            X_ADDR,
+            Y_VALUES + i*LINE_HEIGHT + FONT_HEIGHT,
+            buff_byte
+        );
+    }
+}
+
+inline void app_draw_values(AppState *app_state, ScreenState *screen_state) {
+    uint8_t offset = 0;
+    for (uint8_t i = 0; i*COL_COUNT < CHUNK_COUNT; i++) {
+        for (
+            uint8_t j = 0;
+            j < COL_COUNT && j +i*COL_COUNT < CHUNK_COUNT;
+            j++
+        ) {
+            offset = i*COL_COUNT + j;
+            sprintf(buff_byte, "%02X", screen_state->data[offset]);
+            u8g2_DrawStr(
+                u8g2,
+                X_VALUES + j*2*FONT_WIDTH + 2*j,
+                Y_VALUES + i*LINE_HEIGHT + FONT_HEIGHT,
+                buff_byte
+            );
+            if (
+                screen_state->focus_address - screen_state->address
+                == offset
+            ) {
+                u8g2_DrawFrame(
+                    u8g2,
+                    X_VALUES + j*2*FONT_WIDTH + 2*j - 2,
+                    Y_VALUES + i*LINE_HEIGHT -2,
+                    2*FONT_WIDTH +2,
+                    FONT_HEIGHT +4
+                );
+            }
+        }
+    }
 }

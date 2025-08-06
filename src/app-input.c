@@ -9,10 +9,7 @@ ErrorType app_input_init(AppInput *input) {
         goto Button1AllocFailed;
     }
 
-    input->push_btns[BTN_B] = smart_button_make(
-        PUSH_BTN_B_PIN,
-        PUSH_BTN_REPEAT_MS
-    );
+    input->push_btns[BTN_B] = smart_button_make(PUSH_BTN_B_PIN, 0);
     if (input->push_btns[BTN_B] == NULL) {
         goto Button2AllocFailed;
     }
@@ -54,14 +51,13 @@ void app_input_wait_for_total_release(
     void(*fn)(void *),
     void *user_data
 ) {
-    bool have_raised[2], have_falled[2];
     bool should_exit = 0;
     while (!should_exit) {
         app_input_read(input);
-        have_raised[BTN_A] = smart_button_has_raised(input->push_btns[BTN_A]);
-        have_raised[BTN_B] = smart_button_has_raised(input->push_btns[BTN_B]);
-        have_falled[BTN_A] = smart_button_has_falled(input->push_btns[BTN_A]);
-        have_falled[BTN_B] = smart_button_has_falled(input->push_btns[BTN_B]);
+        smart_button_has_raised(input->push_btns[BTN_A]);
+        smart_button_has_raised(input->push_btns[BTN_B]);
+        smart_button_has_falled(input->push_btns[BTN_A]);
+        smart_button_has_falled(input->push_btns[BTN_B]);
 
         should_exit =
             !smart_button_is_pressed(input->push_btns[BTN_A])
