@@ -39,6 +39,11 @@ typedef struct {
 
 static u8g2_t * u8g2;
 static char buff_byte[8];
+static void load_from_address(
+    AppState *app_state,
+    ScreenState *screen_state,
+    unsigned int address
+);
 static void modify_value(AppState *app_state, ScreenState *screen_state);
 static void app_draw(AppState *app_state, ScreenState *screen_state);
 static void app_draw_addresses(AppState *app_state, ScreenState *screen_state);
@@ -46,6 +51,7 @@ static void app_draw_values(AppState *app_state, ScreenState *screen_state);
 
 
 void screen_editor(AppState *app_state) {
+    static bool btn_has_falled[2];
     u8g2 = (u8g2_t *)app_state->display;
     unsigned int device_size = app_state->eeprom_device.page_count
         * app_state->eeprom_device.page_size;
@@ -70,20 +76,19 @@ void screen_editor(AppState *app_state) {
         goto AT24CXXMakeFailed;
     }
     at24cxx_begin(screen_state.at24cxx, EEPROM_ADDR, tw);
-    screen_state.readed_count = at24cxx_read_at(
-        screen_state.at24cxx,
-        screen_state.address,
-        screen_state.data,
-        CHUNK_COUNT
-    );
+    load_from_address(app_state, &screen_state, 0);
     SCREEN_SET_NEEDS_REFRESH(screen_state);
 
     // body
     while (!SCREEN_SHOULD_EXIT(screen_state)) {
         app_input_read(&app_state->input);
+        btn_has_falled[BTN_A] =
+            smart_button_has_falled(app_state->input.push_btns[BTN_A]);
+        btn_has_falled[BTN_B] =
+            smart_button_has_falled(app_state->input.push_btns[BTN_B]);
 
         if (
-            smart_button_has_falled(app_state->input.push_btns[BTN_B])
+            btn_has_falled[BTN_B]
             && screen_state.btn_b_last_hold_action_at == 0
         ) {
             screen_state.focus_address++;
@@ -94,10 +99,10 @@ void screen_editor(AppState *app_state) {
                 screen_state.focus_address = screen_state.address;
             }
             SCREEN_SET_NEEDS_REFRESH(screen_state);
-        } else if (smart_button_has_falled(app_state->input.push_btns[BTN_B])) {
+        } else if (btn_has_falled[BTN_B]) {
             screen_state.btn_b_last_hold_action_at = 0;
             SCREEN_SET_NEEDS_REFRESH(screen_state);
-        } else if (smart_button_has_falled(app_state->input.push_btns[BTN_A])) {
+        } else if (btn_has_falled[BTN_A]) {
             modify_value(app_state, &screen_state);
             SCREEN_SET_NEEDS_REFRESH(screen_state);
         } else if (
@@ -114,28 +119,20 @@ void screen_editor(AppState *app_state) {
             SCREEN_SET_NEEDS_REFRESH(screen_state);
         } else if (
             app_state->input.pressed_during_ms[BTN_B] > PUSH_BTN_LONG_PRESS_MS
+            && (millis() - screen_state.btn_b_last_hold_action_at
+                > PUSH_BTN_LONG_PRESS_MS)
         ) {
-            if (
-                millis() - screen_state.btn_b_last_hold_action_at
-                > PUSH_BTN_LONG_PRESS_MS
-            ) {
-                screen_state.address += CHUNK_COUNT;
-                screen_state.address = screen_state.address % device_size;
-                screen_state.focus_address = screen_state.address;
-                screen_state.readed_count = at24cxx_read_at(
-                    screen_state.at24cxx,
-                    screen_state.address,
-                    screen_state.data,
-                    CHUNK_COUNT
-                );
-                screen_state.btn_b_last_hold_action_at = millis();
-                SCREEN_SET_NEEDS_REFRESH(screen_state);
-            };
+            unsigned int target_address;
+            target_address = (screen_state.address + CHUNK_COUNT) % device_size;
+            load_from_address(app_state, &screen_state, target_address);
+            screen_state.focus_address = screen_state.address;
+
+            screen_state.btn_b_last_hold_action_at = millis();
+            SCREEN_SET_NEEDS_REFRESH(screen_state);
         } else if (app_state->input.pressed_during_ms[BTN_A] > 0) {
             SCREEN_SET_NEEDS_REFRESH(screen_state);
         } else if (app_state->input.pressed_during_ms[BTN_B] > 0) {
             SCREEN_SET_NEEDS_REFRESH(screen_state);
-            screen_state.btn_b_last_hold_action_at = 0;
         }
 
         if (SCREEN_NEEDS_REFRESH(screen_state)) {
@@ -151,6 +148,22 @@ AT24CXXMakeFailed:
     app_input_wait_for_total_release(&app_state->input, NULL, NULL);
     return;
 };
+
+
+inline void load_from_address(
+    AppState *app_state,
+    ScreenState *screen_state,
+    unsigned int address
+) {
+    screen_state->address = address - (address % CHUNK_COUNT);
+    screen_state->readed_count = at24cxx_read_at(
+        screen_state->at24cxx,
+        screen_state->address,
+        screen_state->data,
+        CHUNK_COUNT
+    );
+    screen_state->focus_address = address;
+}
 
 
 inline void modify_value(AppState *app_state, ScreenState *screen_state) {
